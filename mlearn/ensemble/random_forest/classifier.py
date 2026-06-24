@@ -24,7 +24,7 @@ class RandomForestClassifier:
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
         self.trees = []
-        np.random.seed(self.random_state)
+        rng = np.random.default_rng(self.random_state)
         self.n_classes = len(np.unique(y))
         self.n_features = X.shape[1]
         self.max_features_ = resolve_max_features(
@@ -35,11 +35,13 @@ class RandomForestClassifier:
         # 训练每棵决策树 / Train each decision tree
         for _ in range(self.n_estimators):
             # 使用自助采样选择训练数据 / Use bootstrap sampling to select training data
-            idxs = np.random.choice(len(X), len(X), replace=True)
+            idxs = rng.choice(len(X), len(X), replace=True)
+            tree_seed = rng.integers(0, np.iinfo(np.int32).max)
             tree = DecisionTreeClassifier(
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
-                max_features=self.max_features_
+                max_features=self.max_features_,
+                random_state=tree_seed
             )
             tree.fit(X[idxs], y[idxs])
             self.trees.append(tree)

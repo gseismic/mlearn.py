@@ -60,6 +60,32 @@ def test_random_forest_regressor_recomputes_max_features_on_refit():
     assert model.max_features_ == 1
 
 
+def test_random_forest_regressor_random_state_is_isolated_and_reproducible():
+    """验证回归森林的本地随机源既隔离全局状态又可复现。"""
+    rng = np.random.default_rng(5)
+    X = rng.normal(size=(100, 3))
+    y = 2 * X[:, 0] - X[:, 1]
+
+    np.random.seed(123)
+    expected = np.random.random(3)
+    np.random.seed(123)
+    first = ensemble.RandomForestRegressor(
+        n_estimators=5,
+        max_depth=3,
+        random_state=11
+    ).fit(X, y)
+    actual = np.random.random(3)
+    second = ensemble.RandomForestRegressor(
+        n_estimators=5,
+        max_depth=3,
+        random_state=11
+    ).fit(X, y)
+
+    np.testing.assert_array_equal(actual, expected)
+    np.testing.assert_allclose(first.predict(X), second.predict(X))
+    assert len({tree.random_state for tree in first.trees}) == 5
+
+
 if __name__ == '__main__':
     if 1:
         test_randomtree_classifier_hello()

@@ -9,7 +9,8 @@ class DecisionTreeRegressor:
                  min_samples_split=2, 
                  max_features=None, 
                  min_impurity_decrease=0.0,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 random_state=None):
         """初始化决策树 / Initialize the decision tree  
         
         Args:
@@ -27,10 +28,13 @@ class DecisionTreeRegressor:
         self.n_features = None
         self.n_samples = None
         self.ccp_alpha = ccp_alpha
+        self.random_state = random_state
+        self._rng = None
 
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
         # X shape: (n_samples, n_features), y shape: (n_samples,)
+        self._rng = np.random.default_rng(self.random_state)
         self.n_features = X.shape[1]
         self.n_samples = X.shape[0]
         self.max_features_ = resolve_max_features(
@@ -103,7 +107,11 @@ class DecisionTreeRegressor:
             return self._make_leaf(y)
 
         # 随机选择特征子集 / Randomly select a subset of features
-        feature_idxs = np.random.choice(n_features, self.max_features_, replace=False)
+        feature_idxs = self._rng.choice(
+            n_features,
+            self.max_features_,
+            replace=False
+        )
 
         # 寻找最佳分裂 / Find the best split
         best_feature, best_threshold, impurity_decrease = self._best_split(X[:, feature_idxs], y)

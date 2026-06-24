@@ -61,6 +61,41 @@ def test_random_forest_classifier_log2_single_feature_uses_one():
     np.testing.assert_array_equal(model.predict(X), y)
 
 
+def test_random_forest_classifier_does_not_change_global_random_state():
+    """验证森林训练不会重置或消耗调用方的全局随机序列。"""
+    X, y = get_dataset()
+    np.random.seed(123)
+    expected = np.random.random(3)
+
+    np.random.seed(123)
+    ensemble.RandomForestClassifier(
+        n_estimators=3,
+        max_depth=2,
+        random_state=7
+    ).fit(X, y)
+    actual = np.random.random(3)
+
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_random_forest_classifier_random_state_is_reproducible():
+    """验证相同随机种子生成相同分类森林预测。"""
+    X, y = get_dataset()
+    first = ensemble.RandomForestClassifier(
+        n_estimators=5,
+        max_depth=3,
+        random_state=11
+    ).fit(X, y)
+    second = ensemble.RandomForestClassifier(
+        n_estimators=5,
+        max_depth=3,
+        random_state=11
+    ).fit(X, y)
+
+    np.testing.assert_array_equal(first.predict(X), second.predict(X))
+    assert len({tree.random_state for tree in first.trees}) == 5
+
+
 if __name__ == '__main__':
     if 1:
         test_randomtree_classifier_hello()

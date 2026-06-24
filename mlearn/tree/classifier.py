@@ -22,7 +22,8 @@ class DecisionTreeClassifier:
     """决策树分类器 / Decision Tree Classifier
     """
     
-    def __init__(self, max_depth=None, min_samples_split=2, max_features=None, ccp_alpha=0.0):
+    def __init__(self, max_depth=None, min_samples_split=2, max_features=None,
+                 ccp_alpha=0.0, random_state=None):
         """初始化决策树 / Initialize the decision tree
         
         Args:
@@ -41,9 +42,12 @@ class DecisionTreeClassifier:
         self.n_features = None # 特征数 
         self.classes_ = None  # 原始类别标签，树内部使用连续整数编码
         self.ccp_alpha = ccp_alpha
+        self.random_state = random_state
+        self._rng = None
     
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
+        self._rng = np.random.default_rng(self.random_state)
         self.classes_, encoded_y = np.unique(y, return_inverse=True)
         self.n_classes = len(self.classes_)
         self.n_features = X.shape[1]
@@ -176,7 +180,11 @@ class DecisionTreeClassifier:
             return self._make_leaf(y)
 
         # 随机选择特征子集
-        feature_idxs = np.random.choice(n_features, self.max_features_, replace=False)
+        feature_idxs = self._rng.choice(
+            n_features,
+            self.max_features_,
+            replace=False
+        )
 
         # 寻找最佳分裂
         best_feature, best_threshold = self._best_split(X[:, feature_idxs], y)
