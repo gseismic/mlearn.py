@@ -32,6 +32,18 @@ def test_randomtree_classifier_hello():
     print("R2 Score:", r2)
 
 
+def test_random_forest_regressor_refit_replaces_trees():
+    """验证重复训练后的回归森林只包含本轮生成的树。"""
+    X = np.arange(8, dtype=float).reshape(4, 2)
+    y = np.array([0.0, 1.0, 2.0, 3.0])
+    model = ensemble.RandomForestRegressor(n_estimators=3, max_depth=2)
+
+    model.fit(X, y)
+    model.fit(X, y)
+
+    assert len(model.trees) == 3
+
+
 if __name__ == '__main__':
     if 1:
         test_randomtree_classifier_hello()

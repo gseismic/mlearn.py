@@ -44,6 +44,19 @@ def test_gbdt_classifier_basic2():
     print(f"训练集对数损失 | Train Log Loss: {loss_train:.4f}")
     print(f"测试集对数损失 | Test Log Loss: {loss_test:.4f}")
 
+
+def test_gbdt_classifier_refit_replaces_trees():
+    """验证重复训练后的分类 GBDT 不保留旧基学习器。"""
+    X = np.array([[0.0], [1.0], [2.0], [3.0]])
+    y = np.array([0, 0, 1, 1])
+    model = ensemble.gbdt.GBDTClassifier(n_estimators=3, max_depth=1)
+
+    model.fit(X, y)
+    model.fit(X, y)
+
+    assert len(model.trees) == 3
+
+
 if __name__ == '__main__':
     if 1:
         test_gbdt_classifier_basic()

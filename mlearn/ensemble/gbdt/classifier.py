@@ -11,6 +11,7 @@ class GBDTClassifier:
         self.F0 = None
 
     def fit(self, X, y):
+        self.trees = []
         self.F0 = np.log(np.mean(y) / (1 - np.mean(y)))
         F = np.full(len(y), self.F0)
         

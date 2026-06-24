@@ -31,6 +31,22 @@ def test_randomtree_classifier_hello():
     accuracy = np.mean(y_pred == y)
     print("Accuracy:", accuracy)
 
+
+def test_random_forest_classifier_refit_replaces_trees():
+    """验证重复训练不会把新树追加到旧森林。"""
+    X, y = get_dataset()
+    model = ensemble.RandomForestClassifier(
+        n_estimators=3,
+        max_depth=2,
+        random_state=0
+    )
+
+    model.fit(X, y)
+    model.fit(X, y)
+
+    assert len(model.trees) == 3
+
+
 if __name__ == '__main__':
     if 1:
         test_randomtree_classifier_hello()

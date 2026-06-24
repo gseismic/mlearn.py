@@ -22,6 +22,7 @@ class RandomForestClassifier:
 
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
+        self.trees = []
         np.random.seed(self.random_state)
         self.n_classes = len(np.unique(y))
         self.n_features = X.shape[1]

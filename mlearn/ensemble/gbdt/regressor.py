@@ -12,6 +12,7 @@ class GBDTRegressor:
     
     def fit(self, X, y):
         # 训练GBDT模型
+        self.trees_ = []
         self.initial_prediction_ = np.mean(y)  # 初始预测为目标均值 / Initial prediction is the mean of the target
         self.y_pred_ = self.initial_prediction_ * np.ones_like(y)  # 初始预测值 / Initial prediction values
         self.residuals_ = y - self.y_pred_

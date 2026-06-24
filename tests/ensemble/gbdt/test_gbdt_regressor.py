@@ -20,6 +20,16 @@ def test_gbdt_regressor_basic():
     # print("Accuracy:", accuracy)
 
 
+def test_gbdt_regressor_refit_replaces_trees():
+    """验证重复训练后的回归 GBDT 不保留旧基学习器。"""
+    X = np.array([[0.0], [1.0], [2.0], [3.0]])
+    y = np.array([0.0, 1.0, 2.0, 3.0])
+    model = ensemble.GBDTRegressor(n_estimators=3, max_depth=1)
+
+    model.fit(X, y)
+    model.fit(X, y)
+
+    assert len(model.trees_) == 3
 
 
 if __name__ == '__main__':

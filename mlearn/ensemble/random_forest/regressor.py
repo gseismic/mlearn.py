@@ -17,6 +17,7 @@ class RandomForestRegressor:
 
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
+        self.trees = []
         # X shape: (n_samples, n_features), y shape: (n_samples,)
         self.n_features = X.shape[1]
         
