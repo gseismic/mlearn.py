@@ -34,3 +34,17 @@ def resolve_max_features(max_features, n_features):
         return max(1, int(max_features * n_features))
 
     raise TypeError("max_features 必须是 None、整数、浮点比例、'sqrt' 或 'log2'。")
+
+
+def split_threshold(left, right):
+    """计算不会因端点直接相加而溢出的分裂阈值。"""
+    left_float = float(left)
+    right_float = float(right)
+    midpoint = left_float / 2 + right_float / 2
+    if (
+        not np.isfinite(midpoint)
+        or midpoint <= left_float
+        or midpoint >= right_float
+    ):
+        return right
+    return midpoint

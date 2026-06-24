@@ -144,6 +144,20 @@ def test_tree_classifier_cost_complexity_pruning_matches_gini_scale():
     np.testing.assert_array_equal(pruned.feature_importance(), np.zeros(1))
 
 
+def test_tree_classifier_threshold_does_not_overflow_large_integers():
+    """验证接近 int64 上限的相邻值不会生成溢出阈值。"""
+    maximum = np.iinfo(np.int64).max
+    X = np.array(
+        [[maximum - 3], [maximum - 2], [maximum - 1], [maximum]],
+        dtype=np.int64
+    )
+    y = np.array([0, 0, 1, 1])
+
+    model = tree.DecisionTreeClassifier(random_state=0).fit(X, y)
+
+    np.testing.assert_array_equal(model.predict(X), y)
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_classifier_hello()

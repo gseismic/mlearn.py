@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import resolve_max_features
+from .utils import resolve_max_features, split_threshold
 from ..utils import (
     validate_X,
     validate_X_y,
@@ -214,7 +214,10 @@ class DecisionTreeRegressor:
                 if total_var < best_var:
                     best_var = total_var
                     best_feature = feature
-                    best_threshold = (thresholds[i] + thresholds[i - 1]) / 2
+                    best_threshold = split_threshold(
+                        thresholds[i - 1],
+                        thresholds[i]
+                    )
 
 
         impurity_decrease = parent_var - best_var

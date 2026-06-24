@@ -123,6 +123,29 @@ def test_tree_regressor_rejects_too_many_max_features():
         )
 
 
+def test_tree_regressor_threshold_does_not_overflow_large_numbers():
+    """验证极大整数和浮点值均能形成非空回归分裂。"""
+    maximum = np.iinfo(np.int64).max
+    integer_X = np.array(
+        [[maximum - 3], [maximum - 2], [maximum - 1], [maximum]],
+        dtype=np.int64
+    )
+    y = np.array([0.0, 0.0, 1.0, 1.0])
+    integer_model = tree.DecisionTreeRegressor(random_state=0).fit(integer_X, y)
+
+    float_X = np.array([[-1e308], [1e308]])
+    float_model = tree.DecisionTreeRegressor(random_state=0).fit(
+        float_X,
+        np.array([0.0, 1.0])
+    )
+
+    np.testing.assert_array_equal(integer_model.predict(integer_X), y)
+    np.testing.assert_array_equal(
+        float_model.predict(float_X),
+        np.array([0.0, 1.0])
+    )
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_regressor_hello()

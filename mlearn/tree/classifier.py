@@ -1,6 +1,6 @@
 import numpy as np
 from collections import Counter
-from .utils import resolve_max_features
+from .utils import resolve_max_features, split_threshold
 from ..utils import (
     validate_X,
     validate_X_y,
@@ -281,7 +281,10 @@ class DecisionTreeClassifier:
                 if best_feature is None or gini < best_gini:
                     best_gini = gini
                     best_feature = feature
-                    best_threshold = (thresholds[i] + thresholds[i - 1]) / 2
+                    best_threshold = split_threshold(
+                        thresholds[i - 1],
+                        thresholds[i]
+                    )
 
         return best_feature, best_threshold
 
