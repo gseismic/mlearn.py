@@ -74,6 +74,47 @@ def test_r2_constant_target_handles_floating_point_residuals():
     assert r2_score(y_true, np.zeros(5)) == 0.0
 
 
+def test_binary_scores_support_arbitrary_positive_labels():
+    """验证二分类指标按 pos_label 执行 one-vs-rest 统计。"""
+    y_true = np.array(["no", "yes", "yes"])
+    y_pred = np.array(["no", "yes", "no"])
+
+    assert precision_score(y_true, y_pred, pos_label="yes") == 1.0
+    assert recall_score(y_true, y_pred, pos_label="yes") == 0.5
+    np.testing.assert_allclose(
+        f1_score(y_true, y_pred, pos_label="yes"),
+        2 / 3
+    )
+
+    assert precision_score([1, 2, 2], [1, 2, 1]) == 0.5
+    assert recall_score([1, 2, 2], [1, 2, 1]) == 1.0
+
+
+def test_log_loss_supports_arbitrary_binary_labels():
+    """验证对数损失先按正类标签编码，再应用二元交叉熵。"""
+    loss = log_loss([1, 2], [0.8, 0.2], pos_label=1)
+
+    np.testing.assert_allclose(loss, -np.log(0.8))
+
+
+@pytest.mark.parametrize(
+    ("y_true", "y_pred", "message"),
+    [
+        ([0, 1, 2], [0.1, 0.5, 0.9], "仅支持二分类"),
+        ([0, 1], [np.nan, 0.8], "有限概率"),
+        ([0, 1], [-0.1, 1.1], r"\[0, 1\]"),
+    ]
+)
+def test_log_loss_rejects_invalid_targets_and_probabilities(
+    y_true,
+    y_pred,
+    message
+):
+    """验证无效二分类概率不会被静默裁剪或传播为 NaN。"""
+    with pytest.raises(ValueError, match=message):
+        log_loss(y_true, y_pred)
+
+
 if __name__ == '__main__':
     if 1:
         test_metrics_basic()

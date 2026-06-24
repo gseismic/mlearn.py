@@ -18,7 +18,7 @@ def accuracy_score(y_true, y_pred):
     y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     return np.mean(y_true == y_pred)
 
-def precision_score(y_true, y_pred):
+def precision_score(y_true, y_pred, pos_label=1):
     """
     Compute the precision score.
 
@@ -32,12 +32,14 @@ def precision_score(y_true, y_pred):
     - precision: float，精确率。
     """
     y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
-    tp = np.sum((y_true == 1) & (y_pred == 1))
-    fp = np.sum((y_true == 0) & (y_pred == 1))
+    true_positive = y_true == pos_label
+    predicted_positive = y_pred == pos_label
+    tp = np.sum(true_positive & predicted_positive)
+    fp = np.sum(~true_positive & predicted_positive)
     return tp / (tp + fp) if (tp + fp) > 0 else 0
 
 
-def recall_score(y_true, y_pred):
+def recall_score(y_true, y_pred, pos_label=1):
     """
     Compute the recall score.
 
@@ -52,11 +54,13 @@ def recall_score(y_true, y_pred):
     - recall: float，召回率。
     """
     y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
-    tp = np.sum((y_true == 1) & (y_pred == 1))
-    fn = np.sum((y_true == 1) & (y_pred == 0))
+    true_positive = y_true == pos_label
+    predicted_positive = y_pred == pos_label
+    tp = np.sum(true_positive & predicted_positive)
+    fn = np.sum(true_positive & ~predicted_positive)
     return tp / (tp + fn) if (tp + fn) > 0 else 0
 
-def f1_score(y_true, y_pred):
+def f1_score(y_true, y_pred, pos_label=1):
     """
     Compute the F1 score.
 
@@ -73,8 +77,8 @@ def f1_score(y_true, y_pred):
     - f1: float，F1 分数。
     """
     y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
-    p = precision_score(y_true, y_pred)
-    r = recall_score(y_true, y_pred)
+    p = precision_score(y_true, y_pred, pos_label=pos_label)
+    r = recall_score(y_true, y_pred, pos_label=pos_label)
     return 2 * (p * r) / (p + r) if (p + r) > 0 else 0
 
 def r2_score(y_true, y_pred):
