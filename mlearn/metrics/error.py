@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import ensure_array
+from .utils import ensure_matching_1d_arrays
 
 
 def mean_squared_error(y_true, y_pred):
@@ -16,8 +16,7 @@ def mean_squared_error(y_true, y_pred):
     - mse: float, mean squared error.
     - mse: float，均方误差。
     """
-    y_true = ensure_array(y_true)
-    y_pred = ensure_array(y_pred)
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     return np.mean((y_true - y_pred) ** 2)
 
 def root_mean_squared_error(y_true, y_pred):
@@ -37,6 +36,7 @@ def root_mean_squared_error(y_true, y_pred):
 
 
 def log_loss(y_true, y_pred):
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     eps = 1e-15
     y_pred = np.clip(y_pred, eps, 1 - eps)
     return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))

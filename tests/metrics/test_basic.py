@@ -1,6 +1,16 @@
 import config
-from mlearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, r2_score
 import numpy as np
+import pytest
+
+from mlearn.metrics import (
+    accuracy_score,
+    f1_score,
+    log_loss,
+    mean_squared_error,
+    precision_score,
+    r2_score,
+    recall_score,
+)
 
 
 def test_metrics_basic():
@@ -32,6 +42,32 @@ def test_metrics_basic():
     print("Mean Squared Error:", mse)
     print("Root Mean Squared Error:", rmse)
     print("R^2 Score:", r2)
+
+
+def test_regression_metrics_prevent_column_vector_broadcasting():
+    """验证列向量和一维向量会先规范形状，不会广播成矩阵。"""
+    y_true = np.array([[1.0], [2.0]])
+    y_pred = np.array([1.0, 2.0])
+
+    assert mean_squared_error(y_true, y_pred) == 0.0
+    assert r2_score(y_true, y_pred) == 1.0
+
+
+def test_log_loss_accepts_lists():
+    """验证对数损失与其他指标一样支持列表输入。"""
+    loss = log_loss([0, 1], [0.1, 0.9])
+
+    np.testing.assert_allclose(loss, -np.log(0.9))
+
+
+def test_metrics_reject_mismatched_or_matrix_targets():
+    """验证非法形状在算术运算前明确失败。"""
+    with pytest.raises(ValueError, match="长度必须相同"):
+        mean_squared_error([1, 2], [1])
+
+    with pytest.raises(ValueError, match="必须是一维数组"):
+        accuracy_score(np.ones((2, 2)), np.ones((2, 2)))
+
 
 if __name__ == '__main__':
     if 1:

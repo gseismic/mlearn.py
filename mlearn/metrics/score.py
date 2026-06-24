@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import ensure_array
+from .utils import ensure_matching_1d_arrays
 
 
 def accuracy_score(y_true, y_pred):
@@ -15,8 +15,7 @@ def accuracy_score(y_true, y_pred):
     Returns:
     - accuracy: float，准确率。
     """
-    y_true = ensure_array(y_true)
-    y_pred = ensure_array(y_pred)
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     return np.mean(y_true == y_pred)
 
 def precision_score(y_true, y_pred):
@@ -32,8 +31,7 @@ def precision_score(y_true, y_pred):
     Returns:
     - precision: float，精确率。
     """
-    y_true = ensure_array(y_true)
-    y_pred = ensure_array(y_pred)
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     tp = np.sum((y_true == 1) & (y_pred == 1))
     fp = np.sum((y_true == 0) & (y_pred == 1))
     return tp / (tp + fp) if (tp + fp) > 0 else 0
@@ -53,8 +51,7 @@ def recall_score(y_true, y_pred):
     - recall: float, recall score.
     - recall: float，召回率。
     """
-    y_true = ensure_array(y_true)
-    y_pred = ensure_array(y_pred)
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     tp = np.sum((y_true == 1) & (y_pred == 1))
     fn = np.sum((y_true == 1) & (y_pred == 0))
     return tp / (tp + fn) if (tp + fn) > 0 else 0
@@ -75,8 +72,7 @@ def f1_score(y_true, y_pred):
     - f1: float, F1 score.
     - f1: float，F1 分数。
     """
-    y_true = ensure_array(y_true)
-    y_pred = ensure_array(y_pred)
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     p = precision_score(y_true, y_pred)
     r = recall_score(y_true, y_pred)
     return 2 * (p * r) / (p + r) if (p + r) > 0 else 0
@@ -94,11 +90,7 @@ def r2_score(y_true, y_pred):
     Returns 返回值:
     - r2: float，R^2 分数。
     """
-    y_true = ensure_array(y_true)
-    y_pred = ensure_array(y_pred)
-    
-    if len(y_true) != len(y_pred):
-        raise ValueError("y_true 和 y_pred 的长度必须相同。")
+    y_true, y_pred = ensure_matching_1d_arrays(y_true, y_pred)
     
     if len(y_true) < 2:
         raise ValueError("样本数量必须大于1。")
@@ -113,4 +105,3 @@ def r2_score(y_true, y_pred):
             return 0.0  # 无法计算 R^2，因为所有真实值都相同 | Cannot calculate R^2, because all real values are the same
 
     return 1 - (ss_residual / ss_total)
-
