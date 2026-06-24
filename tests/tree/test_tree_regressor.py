@@ -60,6 +60,27 @@ def test_tree_regressor_leaf_feature_importance_is_zero():
     np.testing.assert_array_equal(model.feature_importance(), np.zeros(1))
 
 
+def test_tree_regressor_cost_complexity_pruning_uses_leaf_count():
+    """验证剪枝比较使用叶节点 SSE 和叶节点数，而不是全部节点数。"""
+    X = np.arange(8, dtype=float).reshape(-1, 1)
+    y = np.array([0.0, 0.0, 0.0, 0.0, 10.0, 10.0, 10.0, 10.0])
+
+    kept = tree.DecisionTreeRegressor(
+        max_depth=3,
+        ccp_alpha=10.0
+    ).fit(X, y)
+    pruned = tree.DecisionTreeRegressor(
+        max_depth=3,
+        ccp_alpha=30.0
+    ).fit(X, y)
+
+    assert kept._count_nodes(kept.tree) == 3
+    np.testing.assert_array_equal(kept.predict(X), y)
+    assert pruned._count_nodes(pruned.tree) == 1
+    np.testing.assert_array_equal(pruned.predict(X), np.full(len(y), 5.0))
+    np.testing.assert_array_equal(pruned.feature_importance(), np.zeros(1))
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_regressor_hello()

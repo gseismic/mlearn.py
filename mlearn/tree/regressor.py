@@ -39,7 +39,7 @@ class DecisionTreeRegressor:
         return self
 
     def _prune_tree(self, tree, X, y):
-        """对树进行剪枝 | prune"""
+        """按全局平均平方误差和叶节点数量执行代价复杂度剪枝。"""
         if 'value' in tree:
             return tree
 
@@ -48,31 +48,34 @@ class DecisionTreeRegressor:
         tree['left'] = self._prune_tree(tree['left'], X[left_mask], y[left_mask])
         tree['right'] = self._prune_tree(tree['right'], X[~left_mask], y[~left_mask])
 
-        # 计算剪枝前后的代价
-        y_pred = self._predict_tree_batch(X, tree)
-        error_before = self._calculate_error(y, y_pred)
-        error_after = self._calculate_error(y, np.full_like(y, np.mean(y)))
+        subtree_cost = (
+            self._leaf_squared_error(tree) / self.n_samples
+            + self.ccp_alpha * self._count_leaves(tree)
+        )
+        leaf_cost = (
+            tree['squared_error'] / self.n_samples
+            + self.ccp_alpha
+        )
 
-        # 如果剪枝后的代价更低，则进行剪枝
-        if error_after <= error_before + self.ccp_alpha * self._count_nodes(tree):
+        if leaf_cost <= subtree_cost:
             return self._make_leaf(y)
         
         return tree
 
-    def _predict_tree_batch(self, X, tree):
-        """使用决策树进行批量样本的预测"""
+    def _leaf_squared_error(self, tree):
+        """汇总子树叶节点的残差平方和。"""
         if 'value' in tree:
-            return np.full(X.shape[0], tree['value'])
+            return tree['squared_error']
+        return (
+            self._leaf_squared_error(tree['left'])
+            + self._leaf_squared_error(tree['right'])
+        )
 
-        left_mask = X[:, tree['feature_idx']] < tree['threshold']
-        predictions = np.zeros(X.shape[0])
-        predictions[left_mask] = self._predict_tree_batch(X[left_mask], tree['left'])
-        predictions[~left_mask] = self._predict_tree_batch(X[~left_mask], tree['right'])
-        return predictions
-
-    def _calculate_error(self, y_true, y_pred):
-        """计算均方误差"""
-        return np.mean((y_true - y_pred) ** 2)
+    def _count_leaves(self, tree):
+        """计算子树叶节点数量。"""
+        if 'value' in tree:
+            return 1
+        return self._count_leaves(tree['left']) + self._count_leaves(tree['right'])
 
     def _count_nodes(self, tree):
         """计算树中的节点数"""
