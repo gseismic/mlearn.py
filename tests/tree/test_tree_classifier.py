@@ -124,6 +124,26 @@ def test_tree_classifier_rejects_invalid_max_features():
         )
 
 
+def test_tree_classifier_cost_complexity_pruning_matches_gini_scale():
+    """验证分类剪枝使用全局 Gini 风险和叶节点数量。"""
+    X = np.arange(8, dtype=float).reshape(-1, 1)
+    y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+
+    kept = tree.DecisionTreeClassifier(
+        ccp_alpha=0.49,
+        random_state=0
+    ).fit(X, y)
+    pruned = tree.DecisionTreeClassifier(
+        ccp_alpha=0.5,
+        random_state=0
+    ).fit(X, y)
+
+    assert kept._count_leaves(kept.tree) == 2
+    np.testing.assert_array_equal(kept.predict(X), y)
+    assert pruned._count_leaves(pruned.tree) == 1
+    np.testing.assert_array_equal(pruned.feature_importance(), np.zeros(1))
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_classifier_hello()

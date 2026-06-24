@@ -40,6 +40,7 @@ class DecisionTreeClassifier:
         self.tree = None
         self.n_classes = None # 类别数
         self.n_features = None # 特征数 
+        self.n_samples = None  # 根训练样本数，用于剪枝风险归一化
         self.classes_ = None  # 原始类别标签，树内部使用连续整数编码
         self.ccp_alpha = ccp_alpha
         self.random_state = random_state
@@ -51,6 +52,7 @@ class DecisionTreeClassifier:
         self.classes_, encoded_y = np.unique(y, return_inverse=True)
         self.n_classes = len(self.classes_)
         self.n_features = X.shape[1]
+        self.n_samples = X.shape[0]
         self.max_features_ = resolve_max_features(
             self.max_features,
             self.n_features
@@ -124,8 +126,8 @@ class DecisionTreeClassifier:
         return n_parent * impurity_decrease
 
     def _prune_tree(self, node, X, y):
-        """对树进行剪枝"""
-        if 'left' not in node:  # 叶子节点
+        """按全局加权 Gini 风险和叶节点数量执行代价复杂度剪枝。"""
+        if 'value' in node:
             return node
 
         # 递归剪枝左右子树
@@ -134,30 +136,38 @@ class DecisionTreeClassifier:
         node['right'] = self._prune_tree(node['right'], X[X[:, node['feature_idx']] >= node['threshold']], 
                                          y[X[:, node['feature_idx']] >= node['threshold']])
 
-        # 如果子节点都是叶子节点，考虑是否剪枝
-        if 'left' not in node['left'] and 'left' not in node['right']:
-            # loss_current = self._node_impurity(node) * node['n_samples']
-            # loss_children = (self._node_impurity(node['left']) * node['left']['n_samples'] +
-            #                  self._node_impurity(node['right']) * node['right']['n_samples'])
-            loss_current = self._calculate_gini(node['class_counts']) * node['n_samples']
-            loss_children = (self._calculate_gini(node['left']['class_counts']) * node['left']['n_samples'] +
-                             self._calculate_gini(node['right']['class_counts']) * node['right']['n_samples'])
-  
-            
-            if loss_current <= loss_children + self.ccp_alpha:
-                # 剪枝：将当前节点变为叶子节点
-                return {
-                    'value': Counter(y).most_common(1)[0][0],
-                    'n_samples': node['n_samples'],
-                    'class_counts': node['class_counts'],
-                    'impurity': node['impurity']
-                }
+        subtree_cost = (
+            self._leaf_impurity(node) / self.n_samples
+            + self.ccp_alpha * self._count_leaves(node)
+        )
+        leaf_cost = (
+            node['n_samples'] * self._calculate_gini(node['class_counts'])
+            / self.n_samples
+            + self.ccp_alpha
+        )
+
+        if leaf_cost <= subtree_cost:
+            return self._make_leaf(y)
 
         return node
-    
-    # def _node_impurity(self, node):
-    #     """计算节点的不纯度"""
-    #     return node['impurity']
+
+    def _leaf_impurity(self, node):
+        """汇总子树叶节点的样本加权 Gini 风险。"""
+        if 'value' in node:
+            return (
+                node['n_samples']
+                * self._calculate_gini(node['class_counts'])
+            )
+        return (
+            self._leaf_impurity(node['left'])
+            + self._leaf_impurity(node['right'])
+        )
+
+    def _count_leaves(self, node):
+        """计算子树叶节点数量。"""
+        if 'value' in node:
+            return 1
+        return self._count_leaves(node['left']) + self._count_leaves(node['right'])
     
     def _calculate_gini(self, class_counts):
         # Gini = 1 - Σ(pi^2)
