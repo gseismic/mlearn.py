@@ -1,4 +1,3 @@
-import config
 import numpy as np
 import pytest
 from mlearn import linear_model
@@ -18,14 +17,15 @@ def test_linear_numpy_basic():
     model = linear_model.LinearRegression()
     model.fit(X, y)  # X shape: (100, 1), y shape: (100, 1)
 
-    # 打印结果
-    print("Coefficients:", model.coef_)  # shape: (1,)
-    print("Intercept:", model.intercept_)  # shape: ()
-    print("**R² Score:", model.score(X, y))  # X shape: (100, 1), y shape: (100, 1)
+    np.testing.assert_allclose(model.coef_, np.array([3.0]), atol=0.1)
+    np.testing.assert_allclose(model.intercept_, 2.0, atol=0.1)
+    assert model.score(X, y) > 0.98
 
     # 进行预测
     X_test = np.array([[0.5]])  # shape: (1, 1)
-    print("Prediction for X=0.5:", model.predict(X_test))  # 输出 shape: (1,)
+    prediction = model.predict(X_test)
+    assert prediction.shape == (1,)
+    np.testing.assert_allclose(prediction, np.array([3.5]), atol=0.1)
 
 
 def test_linear_torch_basic():
@@ -37,14 +37,15 @@ def test_linear_torch_basic():
     optim_kwargs = {'lr': 0.01}
     model.fit(X, y, epochs=2000, optim=optim, **optim_kwargs)
 
-    # 打印结果
-    print("Coefficients:", model.coef_)  # shape: (1,)
-    print("Intercept:", model.intercept_)  # shape: ()
-    print("**R² Score:", model.score(X, y))  # X shape: (100, 1), y shape: (100, 1)
+    np.testing.assert_allclose(model.coef_, np.array([3.0]), atol=0.15)
+    np.testing.assert_allclose(model.intercept_, 2.0, atol=0.15)
+    assert model.score(X, y) > 0.98
 
     # 进行预测
     X_test = np.array([[0.5]])  # shape: (1, 1)
-    print("Prediction for X=0.5:", model.predict(X_test))  # 输出 shape: (1,)
+    prediction = model.predict(X_test)
+    assert prediction.shape == (1,)
+    np.testing.assert_allclose(prediction, np.array([3.5]), atol=0.15)
 
 
 def test_linear_numpy_supports_rank_deficient_features():

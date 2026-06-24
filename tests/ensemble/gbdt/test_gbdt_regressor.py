@@ -1,7 +1,6 @@
-import config
 import numpy as np
 from mlearn import ensemble
-from mlearn.metrics import r2_score, accuracy_score, log_loss
+from mlearn.metrics import r2_score
 
 
 def test_gbdt_regressor_basic():
@@ -13,11 +12,11 @@ def test_gbdt_regressor_basic():
 
     X_test = np.array([[1.0], [3.0], [4.0]])
     predictions = model.predict(X_test)
-    print("Predictions:", predictions)
-
-    # 计算准确率 / Calculate accuracy
-    # accuracy = np.mean(y_pred == y)
-    # print("Accuracy:", accuracy)
+    assert predictions.shape == (3,)
+    assert r2_score(
+        y,
+        model.predict(X)
+    ) > 0.999
 
 
 def test_gbdt_regressor_refit_replaces_trees():

@@ -1,4 +1,3 @@
-import config
 import numpy as np
 from mlearn import ensemble
 from mlearn.metrics import r2_score
@@ -24,12 +23,12 @@ def test_randomtree_classifier_hello():
     # 进行预测 / Make predictions
     X_test = np.random.rand(10, 5)  # shape: (10, 5)
     predictions = rf.predict(X_test)  # shape: (10,)
-    print("Predictions:", predictions)
+    assert predictions.shape == (10,)
 
     # 计算均方误差 / Calculate mean squared error
     y_pred = rf.predict(X)  # shape: (100,)
     r2 = r2_score(y, y_pred)
-    print("R2 Score:", r2)
+    assert r2 >= 0.85
 
 
 def test_random_forest_regressor_refit_replaces_trees():

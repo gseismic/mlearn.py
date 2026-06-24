@@ -1,4 +1,3 @@
-import config
 import numpy as np
 import pytest
 from mlearn import ensemble
@@ -13,10 +12,8 @@ def test_gbdt_classifier_basic():
 
     X_test = X
     predictions = model.predict(X_test)
-    print("Predictions:", predictions)
-    
     score = accuracy_score(y, predictions)
-    print("Accuracy:", score)
+    assert score == 1.0
 
 
 def test_gbdt_classifier_basic2():
@@ -40,10 +37,10 @@ def test_gbdt_classifier_basic2():
     loss_train = log_loss(y_train, y_prob_train)
     loss_test = log_loss(y_test, y_prob_test)
 
-    print(f"训练集准确率 | Train Accuracy: {acc_train:.4f}")
-    print(f"测试集准确率 | Test Accuracy: {acc_test:.4f}")
-    print(f"训练集对数损失 | Train Log Loss: {loss_train:.4f}")
-    print(f"测试集对数损失 | Test Log Loss: {loss_test:.4f}")
+    assert acc_train >= 0.95
+    assert acc_test >= 0.90
+    assert loss_train < log_loss(y_train, np.full(len(y_train), np.mean(y_train)))
+    assert loss_test < log_loss(y_test, np.full(len(y_test), np.mean(y_train)))
 
 
 def test_gbdt_classifier_refit_replaces_trees():

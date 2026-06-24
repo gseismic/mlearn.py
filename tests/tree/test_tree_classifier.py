@@ -1,4 +1,3 @@
-import config
 import numpy as np
 import pytest
 from mlearn import tree
@@ -25,12 +24,12 @@ def test_tree_classifier_hello():
     # 预测 | Predict    
     X_test = np.array([[0, 0], [1, 1]])
     predictions = clf.predict(X_test)
-    print("Predictions:", predictions)
+    np.testing.assert_array_equal(predictions, np.array([0, 1]))
 
     # 计算准确率 | Calculate accuracy
     y_pred = clf.predict(X_train)
     accuracy = accuracy_score(y_train, y_pred)
-    print("Accuracy:", accuracy)
+    assert accuracy == 1.0
 
 def test_tree_classifier():
     X, y = get_dataset()
@@ -44,12 +43,12 @@ def test_tree_classifier():
     # 进行预测 | Predict
     X_test = np.array([[0.5, 0.5], [0.8, 0.8]])  # shape: (2, 2)
     predictions = clf.predict(X_test)  # shape: (2,)
-    print("Predictions:", predictions)
+    assert predictions.shape == (2,)
 
     # 计算准确率 | Calculate accuracy   
     y_pred = clf.predict(X)  # shape: (100,)
     accuracy = np.mean(y_pred == y)
-    print("Accuracy:", accuracy)
+    assert accuracy >= 0.95
 
 
 def test_tree_classifier_supports_non_consecutive_integer_labels():

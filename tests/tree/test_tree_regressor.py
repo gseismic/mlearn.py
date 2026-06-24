@@ -1,4 +1,3 @@
-import config
 import numpy as np
 import pytest
 from mlearn import tree
@@ -25,15 +24,16 @@ def test_tree_regressor_hello():
     # 预测
     X_test = np.array([[0, 0], [1, 1]])
     predictions = clf.predict(X_test)
-    print("Predictions:", predictions)
+    assert predictions.shape == (2,)
 
     y_true = np.array([0.1, 1.1])  # 真实目标值
 
     score = r2_score(y_true, predictions)
-    print("r2_score:", score)
+    assert score > 0.95
     
     importances = clf.feature_importance()
-    print("feature_importance:", importances)
+    np.testing.assert_allclose(np.sum(importances), 1.0)
+    assert np.all(np.isfinite(importances))
 
 
 def test_tree_regressor_feature_importance_uses_training_statistics():

@@ -1,4 +1,3 @@
-import config
 import numpy as np
 import pytest
 
@@ -27,21 +26,19 @@ def test_metrics_basic():
     recall = recall_score(y_true_class, y_pred_class)
     f1 = f1_score(y_true_class, y_pred_class)
 
-    print("Classification Metrics:")
-    print("Accuracy:", accuracy)
-    print("Precision:", precision)
-    print("Recall:", recall)
-    print("F1 Score:", f1)
+    assert accuracy == 0.5
+    assert precision == 0.5
+    assert recall == 0.5
+    assert f1 == 0.5
 
     # 回归指标
     mse = mean_squared_error(y_true_reg, y_pred_reg)
     rmse = np.sqrt(mse)
     r2 = r2_score(y_true_reg, y_pred_reg)
 
-    print("\nRegression Metrics:")
-    print("Mean Squared Error:", mse)
-    print("Root Mean Squared Error:", rmse)
-    print("R^2 Score:", r2)
+    assert mse == 0.375
+    np.testing.assert_allclose(rmse, np.sqrt(0.375))
+    np.testing.assert_allclose(r2, 0.9486081370449679)
 
 
 def test_regression_metrics_prevent_column_vector_broadcasting():

@@ -1,7 +1,5 @@
-import config
 import numpy as np
 from mlearn import ensemble
-from mlearn.metrics import r2_score
 
 
 def get_dataset():
@@ -24,12 +22,12 @@ def test_randomtree_classifier_hello():
     # 进行预测 / Make predictions
     X_test = np.random.rand(10, 5)  # shape: (10, 5)
     predictions = rf.predict(X_test)  # shape: (10,)
-    print("Predictions:", predictions)
+    assert predictions.shape == (10,)
 
     # 计算准确率 / Calculate accuracy
     y_pred = rf.predict(X)  # shape: (100,)
     accuracy = np.mean(y_pred == y)
-    print("Accuracy:", accuracy)
+    assert accuracy >= 0.9
 
 
 def test_random_forest_classifier_refit_replaces_trees():
