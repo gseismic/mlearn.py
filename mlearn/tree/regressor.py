@@ -103,9 +103,11 @@ class DecisionTreeRegressor:
 
         # 寻找最佳分裂 / Find the best split
         best_feature, best_threshold, impurity_decrease = self._best_split(X[:, feature_idxs], y)
+        weighted_impurity_decrease = impurity_decrease / self.n_samples
 
         # 如果无法找到有效的分裂，返回叶节点
-        if best_feature is None or best_threshold is None or impurity_decrease < self.min_impurity_decrease:
+        if best_feature is None or best_threshold is None or \
+           weighted_impurity_decrease < self.min_impurity_decrease:
             return self._make_leaf(y)
 
         # 分裂数据 / Split the data

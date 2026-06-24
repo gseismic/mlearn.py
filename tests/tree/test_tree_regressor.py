@@ -81,6 +81,26 @@ def test_tree_regressor_cost_complexity_pruning_uses_leaf_count():
     np.testing.assert_array_equal(pruned.feature_importance(), np.zeros(1))
 
 
+def test_tree_regressor_min_impurity_decrease_is_replication_invariant():
+    """验证完全复制数据集不会改变最小不纯度下降的分裂判断。"""
+    base_X = np.array([[0.0], [1.0]])
+    base_y = np.array([0.0, 1.0])
+
+    for repeat in (1, 2, 10):
+        X = np.repeat(base_X, repeat, axis=0)
+        y = np.repeat(base_y, repeat)
+
+        split_model = tree.DecisionTreeRegressor(
+            min_impurity_decrease=0.2
+        ).fit(X, y)
+        leaf_model = tree.DecisionTreeRegressor(
+            min_impurity_decrease=0.3
+        ).fit(X, y)
+
+        assert split_model._count_nodes(split_model.tree) == 3
+        assert leaf_model._count_nodes(leaf_model.tree) == 1
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_regressor_hello()
