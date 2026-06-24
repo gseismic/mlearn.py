@@ -55,7 +55,7 @@ class DecisionTreeRegressor:
 
         # 如果剪枝后的代价更低，则进行剪枝
         if error_after <= error_before + self.ccp_alpha * self._count_nodes(tree):
-            return {'value': np.mean(y)}
+            return self._make_leaf(y)
         
         return tree
 
@@ -93,7 +93,7 @@ class DecisionTreeRegressor:
         # 检查停止条件 / Check stopping conditions
         if (self.max_depth is not None and depth >= self.max_depth) or \
            n_samples < self.min_samples_split:
-            return {'value': np.mean(y)}
+            return self._make_leaf(y)
 
         # 随机选择特征子集 / Randomly select a subset of features
         feature_idxs = np.random.choice(n_features, self.max_features, replace=False)
@@ -103,7 +103,7 @@ class DecisionTreeRegressor:
 
         # 如果无法找到有效的分裂，返回叶节点
         if best_feature is None or best_threshold is None or impurity_decrease < self.min_impurity_decrease:
-            return {'value': np.mean(y)}
+            return self._make_leaf(y)
 
         # 分裂数据 / Split the data
         left_idxs = X[:, feature_idxs[best_feature]] < best_threshold
@@ -113,8 +113,28 @@ class DecisionTreeRegressor:
         left_tree = self._grow_tree(X[left_idxs], y[left_idxs], depth + 1)
         right_tree = self._grow_tree(X[right_idxs], y[right_idxs], depth + 1)
 
-        return {'feature_idx': feature_idxs[best_feature], 'threshold': best_threshold,
-                'left': left_tree, 'right': right_tree}
+        return {
+            'feature_idx': feature_idxs[best_feature],
+            'threshold': best_threshold,
+            'left': left_tree,
+            'right': right_tree,
+            'n_samples': n_samples,
+            'squared_error': self._squared_error(y)
+        }
+
+    def _make_leaf(self, y):
+        """构造叶节点并保存特征重要性和剪枝所需的真实训练统计量。"""
+        return {
+            'value': np.mean(y),
+            'n_samples': len(y),
+            'squared_error': self._squared_error(y)
+        }
+
+    def _squared_error(self, y):
+        """计算目标值相对节点均值的残差平方和。"""
+        if len(y) == 0:
+            return 0.0
+        return np.sum((y - np.mean(y)) ** 2)
 
     def _best_split(self, X, y):
         """寻找最佳分裂特征和阈值 / Find the best feature and threshold for splitting"""
@@ -169,7 +189,7 @@ class DecisionTreeRegressor:
         else:
             return self._predict_tree(x, tree['right'])
 
-    def feature_importance(self, weighted=False):
+    def feature_importance(self, weighted=True):
         """计算特征重要性 | Calculate feature importance"""
         # 方差减少 | Variance reduction
         if self.tree is None:
@@ -179,7 +199,10 @@ class DecisionTreeRegressor:
         self._feature_importance(self.tree, importance, weighted)
         
         # 归一化特征重要性
-        return importance / np.sum(importance)
+        total_importance = np.sum(importance)
+        if total_importance == 0:
+            return importance
+        return importance / total_importance
 
     def _feature_importance(self, node, importance, weighted=False):
         """递归计算特征重要性 | Recursively calculate feature importance"""
@@ -206,27 +229,15 @@ class DecisionTreeRegressor:
 
     def _count_samples(self, node):
         """计算节点中的样本数 | Calculate the number of samples in the node"""
-        if 'value' in node:
-            return 1
-        return self._count_samples(node['left']) + self._count_samples(node['right'])
+        return node['n_samples']
 
     def _calculate_variance_reduction(self, node):
         """计算节点的方差减少 | Calculate the variance reduction of the node"""
         if 'value' in node:
             return 0
         
-        parent_var = np.var(self._get_node_values(node))
-        left_var = np.var(self._get_node_values(node['left']))
-        right_var = np.var(self._get_node_values(node['right']))
-        
-        n_left = self._count_samples(node['left'])
-        n_right = self._count_samples(node['right'])
-        n_total = n_left + n_right
-        
-        return parent_var - (n_left / n_total * left_var + n_right / n_total * right_var)
-
-    def _get_node_values(self, node):
-        """获取节点中的所有值 | Get all values in the node"""
-        if 'value' in node:
-            return [node['value']]
-        return self._get_node_values(node['left']) + self._get_node_values(node['right'])
+        n_total = node['n_samples']
+        children_error = (
+            node['left']['squared_error'] + node['right']['squared_error']
+        )
+        return (node['squared_error'] - children_error) / n_total

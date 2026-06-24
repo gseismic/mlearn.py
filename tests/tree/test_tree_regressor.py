@@ -35,6 +35,31 @@ def test_tree_regressor_hello():
     print("feature_importance:", importances)
 
 
+def test_tree_regressor_feature_importance_uses_training_statistics():
+    """验证特征重要性使用真实节点 SSE，而不是把叶均值当作样本。"""
+    rng = np.random.default_rng(86)
+    X = rng.normal(size=(40, 3))
+    y = 5 * X[:, 0] + 2 * X[:, 1] + rng.normal(scale=2, size=40)
+
+    np.random.seed(86)
+    model = tree.DecisionTreeRegressor(max_depth=3).fit(X, y)
+    importances = model.feature_importance()
+
+    assert np.argmax(importances) == 0
+    np.testing.assert_allclose(np.sum(importances), 1.0)
+    assert np.all(np.isfinite(importances))
+
+
+def test_tree_regressor_leaf_feature_importance_is_zero():
+    """验证没有分裂的回归树返回有限的零重要性。"""
+    X = np.ones((4, 1))
+    y = np.array([1.0, 2.0, 3.0, 4.0])
+
+    model = tree.DecisionTreeRegressor().fit(X, y)
+
+    np.testing.assert_array_equal(model.feature_importance(), np.zeros(1))
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_regressor_hello()
