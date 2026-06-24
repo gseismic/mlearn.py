@@ -1,5 +1,8 @@
 import numpy as np
 
+from ...metrics import r2_score
+from ...utils import validate_X, validate_X_y
+
 
 class LinearRegression:
 
@@ -13,6 +16,7 @@ class LinearRegression:
         self.fit_intercept = fit_intercept
         self.coef_ = None  # 将存储系数,shape: (n_features,)
         self.intercept_ = None  # 将存储截距,shape: ()
+        self.n_features_in_ = None
 
     def fit(self, X, y):
         """
@@ -25,16 +29,10 @@ class LinearRegression:
         返回:
         self: 训练后的模型实例
         """
-        X = np.asarray(X)
-        y = np.asarray(y)
-        if X.ndim != 2:
-            raise ValueError("X 必须是二维特征矩阵。")
-        if y.ndim == 2 and y.shape[1] == 1:
-            y = y.reshape(-1)
-        elif y.ndim != 1:
-            raise ValueError("y 必须是一维数组或单列二维数组。")
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X 和 y 的样本数量必须相同。")
+        if not isinstance(self.fit_intercept, bool):
+            raise TypeError("fit_intercept 必须是布尔值。")
+        X, y = validate_X_y(X, y, numeric_y=True)
+        self.n_features_in_ = X.shape[1]
         
         if self.fit_intercept:
             # 添加一列1用于拟合截距
@@ -47,6 +45,7 @@ class LinearRegression:
             self.intercept_ = theta[0]  # 截距,shape: ()
             self.coef_ = theta[1:]  # 系数,shape: (n_features,)
         else:
+            self.intercept_ = None
             self.coef_ = theta  # 系数,shape: (n_features,)
 
         return self
@@ -61,6 +60,13 @@ class LinearRegression:
         返回:
         numpy.ndarray: 预测结果,shape: (n_samples,)
         """
+        if self.coef_ is None:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(
+            X,
+            n_features=self.n_features_in_,
+            allow_1d=True
+        )
         if self.fit_intercept:
             # 添加一列1用于计算截距
             X = np.column_stack((np.ones(X.shape[0]), X))  # shape: (n_samples, n_features + 1)
@@ -79,12 +85,5 @@ class LinearRegression:
         返回:
         float: R²分数
         """
-        y_pred = self.predict(X)  # shape: (n_samples,)
-        
-        # 确保y是一维数组
-        if y.ndim == 2:
-            y = y.ravel()  # shape: (n_samples,)
-        
-        u = ((y - y_pred) ** 2).sum()  # 残差平方和,shape: ()
-        v = ((y - y.mean()) ** 2).sum()  # 总离差平方和,shape: ()
-        return 1 - u/v  # R²分数,shape: ()
+        y_pred = self.predict(X)
+        return r2_score(y, y_pred)

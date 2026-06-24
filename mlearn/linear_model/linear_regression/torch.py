@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
+from ...metrics import r2_score
+from ...utils import validate_X, validate_X_y
+
 class LinearRegression(nn.Module):
 
     def __init__(self, fit_intercept=True, verbose=0):
@@ -16,6 +19,7 @@ class LinearRegression(nn.Module):
         self.fit_intercept = fit_intercept
         self.linear = None
         self.verbose = verbose
+        self.n_features_in_ = None
 
     def forward(self, x):
         """
@@ -42,6 +46,11 @@ class LinearRegression(nn.Module):
         返回:
         self: 训练后的模型实例
         """
+        if not isinstance(self.fit_intercept, bool):
+            raise TypeError("fit_intercept 必须是布尔值。")
+        X, y = validate_X_y(X, y, numeric_y=True)
+        self.n_features_in_ = X.shape[1]
+
         # 将numpy数组转换为PyTorch张量
         X = torch.FloatTensor(X)  # shape: (n_samples, input_dim)
         y = torch.FloatTensor(y).view(-1, 1)  # shape: (n_samples, 1)
@@ -103,6 +112,13 @@ class LinearRegression(nn.Module):
         返回:
         numpy.ndarray: 预测结果,shape: (n_samples,)
         """
+        if self.linear is None:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(
+            X,
+            n_features=self.n_features_in_,
+            allow_1d=True
+        )
         X = torch.FloatTensor(X)  # shape: (n_samples, input_dim)
         with torch.no_grad():  # 不计算梯度
             return self(X).numpy().flatten()  # 输出 shape: (n_samples,)
@@ -118,11 +134,8 @@ class LinearRegression(nn.Module):
         返回:
         float: R²分数
         """
-        y_pred = self.predict(X)  # shape: (n_samples,)
-        y = y.flatten()  # 确保y是一维数组,shape: (n_samples,)
-        u = ((y - y_pred) ** 2).sum()  # 残差平方和,标量
-        v = ((y - y.mean()) ** 2).sum()  # 总离差平方和,标量
-        return 1 - u/v  # R²分数,标量
+        y_pred = self.predict(X)
+        return r2_score(y, y_pred)
 
     @property
     def coef_(self):

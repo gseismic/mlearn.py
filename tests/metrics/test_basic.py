@@ -66,6 +66,14 @@ def test_metrics_reject_mismatched_or_matrix_targets():
         accuracy_score(np.ones((2, 2)), np.ones((2, 2)))
 
 
+def test_r2_constant_target_handles_floating_point_residuals():
+    """验证常量目标的数值舍入误差不会被误判为失败预测。"""
+    y_true = np.ones(5)
+
+    assert r2_score(y_true, y_true + 1e-12) == 1.0
+    assert r2_score(y_true, np.zeros(5)) == 0.0
+
+
 if __name__ == '__main__':
     if 1:
         test_metrics_basic()

@@ -98,8 +98,8 @@ def r2_score(y_true, y_pred):
     ss_total = np.sum((y_true - np.mean(y_true)) ** 2)
     ss_residual = np.sum((y_true - y_pred) ** 2)
     
-    if ss_total == 0:
-        if ss_residual == 0:
+    if np.isclose(ss_total, 0):
+        if np.isclose(ss_residual, 0):
             return 1.0  # 完美预测 | Perfect prediction
         else:
             return 0.0  # 无法计算 R^2，因为所有真实值都相同 | Cannot calculate R^2, because all real values are the same
