@@ -1,5 +1,6 @@
 import config
 import numpy as np
+import pytest
 from mlearn import ensemble
 from mlearn.metrics import accuracy_score, log_loss
 
@@ -55,6 +56,57 @@ def test_gbdt_classifier_refit_replaces_trees():
     model.fit(X, y)
 
     assert len(model.trees) == 3
+
+
+def test_gbdt_classifier_supports_binary_string_labels():
+    """验证二分类标签编码和概率列顺序与原始类别一致。"""
+    X = np.array([[0.0], [1.0], [2.0], [3.0]])
+    y = np.array(["down", "down", "up", "up"])
+    model = ensemble.gbdt.GBDTClassifier(
+        n_estimators=10,
+        learning_rate=0.1,
+        max_depth=1
+    ).fit(X, y)
+
+    probabilities = model.predict_proba(X)
+    np.testing.assert_array_equal(model.predict(X), y)
+    np.testing.assert_array_equal(model.classes_, np.array(["down", "up"]))
+    np.testing.assert_allclose(np.sum(probabilities, axis=1), 1.0)
+    assert np.all(np.isfinite(probabilities))
+
+
+def test_gbdt_classifier_newton_updates_reduce_log_loss():
+    """验证基学习器更新确实降低二分类逻辑损失。"""
+    rng = np.random.default_rng(42)
+    X = rng.normal(size=(400, 3))
+    y = (2 * X[:, 0] - X[:, 1] + 0.5 * X[:, 2] > 0).astype(int)
+    model = ensemble.gbdt.GBDTClassifier(
+        n_estimators=20,
+        learning_rate=0.1,
+        max_depth=2
+    ).fit(X, y)
+
+    initial_probability = np.full(len(y), np.mean(y))
+    assert log_loss(y, model.predict_proba(X)[:, 1]) < log_loss(
+        y,
+        initial_probability
+    )
+
+
+@pytest.mark.parametrize(
+    "labels",
+    [
+        np.array([0, 0, 0]),
+        np.array([0, 1, 2]),
+    ]
+)
+def test_gbdt_classifier_rejects_non_binary_targets(labels):
+    """验证模型不会为单类别或多类别目标生成无效 log-odds。"""
+    with pytest.raises(ValueError, match="恰好两个类别"):
+        ensemble.gbdt.GBDTClassifier().fit(
+            np.arange(len(labels), dtype=float).reshape(-1, 1),
+            labels
+        )
 
 
 if __name__ == '__main__':
