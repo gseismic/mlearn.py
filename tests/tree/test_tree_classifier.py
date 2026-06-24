@@ -1,5 +1,6 @@
 import config
 import numpy as np
+import pytest
 from mlearn import tree
 from mlearn.metrics import accuracy_score
 
@@ -93,6 +94,35 @@ def test_tree_classifier_allows_zero_gain_split_for_xor():
     clf = tree.DecisionTreeClassifier(max_depth=2).fit(X, y)
 
     np.testing.assert_array_equal(clf.predict(X), y)
+
+
+def test_tree_classifier_recomputes_max_features_on_refit():
+    """验证 None 配置在不同特征维度重训时不会保留旧解析值。"""
+    y = np.array([0, 0, 1, 1])
+    model = tree.DecisionTreeClassifier(max_depth=1)
+
+    model.fit(np.arange(8, dtype=float).reshape(4, 2), y)
+    assert model.max_features is None
+    assert model.max_features_ == 2
+
+    model.fit(np.arange(4, dtype=float).reshape(4, 1), y)
+    assert model.max_features is None
+    assert model.max_features_ == 1
+
+
+def test_tree_classifier_rejects_invalid_max_features():
+    """验证非法特征子采样数量在训练入口明确失败。"""
+    with pytest.raises(ValueError, match="位于"):
+        tree.DecisionTreeClassifier(max_features=0).fit(
+            np.ones((4, 2)),
+            np.array([0, 0, 1, 1])
+        )
+
+    with pytest.raises(TypeError, match="不能是布尔值"):
+        tree.DecisionTreeClassifier(max_features=True).fit(
+            np.ones((4, 2)),
+            np.array([0, 0, 1, 1])
+        )
 
 
 if __name__ == '__main__':

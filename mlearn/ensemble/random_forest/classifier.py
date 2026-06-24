@@ -1,6 +1,7 @@
 import numpy as np
 from collections import Counter
 from ...tree.classifier import DecisionTreeClassifier
+from ...tree.utils import resolve_max_features
 
 
 class RandomForestClassifier:
@@ -26,13 +27,10 @@ class RandomForestClassifier:
         np.random.seed(self.random_state)
         self.n_classes = len(np.unique(y))
         self.n_features = X.shape[1]
-        
-        if self.max_features == 'sqrt':
-            self.max_features = int(np.sqrt(self.n_features))
-        elif self.max_features == 'log2':
-            self.max_features = int(np.log2(self.n_features))
-        elif isinstance(self.max_features, float):
-            self.max_features = int(self.max_features * self.n_features)
+        self.max_features_ = resolve_max_features(
+            self.max_features,
+            self.n_features
+        )
         
         # 训练每棵决策树 / Train each decision tree
         for _ in range(self.n_estimators):
@@ -41,7 +39,7 @@ class RandomForestClassifier:
             tree = DecisionTreeClassifier(
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
-                max_features=self.max_features
+                max_features=self.max_features_
             )
             tree.fit(X[idxs], y[idxs])
             self.trees.append(tree)

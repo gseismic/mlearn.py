@@ -1,5 +1,6 @@
 import config
 import numpy as np
+import pytest
 from mlearn import tree
 from mlearn.metrics import r2_score
 
@@ -99,6 +100,27 @@ def test_tree_regressor_min_impurity_decrease_is_replication_invariant():
 
         assert split_model._count_nodes(split_model.tree) == 3
         assert leaf_model._count_nodes(leaf_model.tree) == 1
+
+
+def test_tree_regressor_small_max_features_fraction_uses_one_feature():
+    """验证正浮点比例不会因向下取整生成零特征模型。"""
+    X = np.arange(8, dtype=float).reshape(4, 2)
+    y = np.array([0.0, 1.0, 2.0, 3.0])
+
+    model = tree.DecisionTreeRegressor(max_features=0.1).fit(X, y)
+
+    assert model.max_features == 0.1
+    assert model.max_features_ == 1
+    assert model._count_nodes(model.tree) > 1
+
+
+def test_tree_regressor_rejects_too_many_max_features():
+    """验证整数特征数不能超过训练数据实际列数。"""
+    with pytest.raises(ValueError, match="位于"):
+        tree.DecisionTreeRegressor(max_features=3).fit(
+            np.ones((4, 2)),
+            np.arange(4, dtype=float)
+        )
 
 
 if __name__ == '__main__':

@@ -44,6 +44,23 @@ def test_random_forest_regressor_refit_replaces_trees():
     assert len(model.trees) == 3
 
 
+def test_random_forest_regressor_recomputes_max_features_on_refit():
+    """验证字符串配置根据每次训练的特征维度重新解析。"""
+    y = np.array([0.0, 1.0, 2.0, 3.0])
+    model = ensemble.RandomForestRegressor(
+        n_estimators=2,
+        max_depth=1,
+        max_features="sqrt"
+    )
+
+    model.fit(np.arange(16, dtype=float).reshape(4, 4), y)
+    assert model.max_features_ == 2
+
+    model.fit(np.arange(4, dtype=float).reshape(4, 1), y)
+    assert model.max_features == "sqrt"
+    assert model.max_features_ == 1
+
+
 if __name__ == '__main__':
     if 1:
         test_randomtree_classifier_hello()

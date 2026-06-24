@@ -1,4 +1,5 @@
 import numpy as np
+from .utils import resolve_max_features
 
 class DecisionTreeRegressor:
     """决策树回归器 / Decision Tree Regressor"""
@@ -20,6 +21,7 @@ class DecisionTreeRegressor:
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.max_features = max_features
+        self.max_features_ = None  # 当前训练数据解析后的特征子采样数量
         self.min_impurity_decrease = min_impurity_decrease
         self.tree = None
         self.n_features = None
@@ -31,8 +33,10 @@ class DecisionTreeRegressor:
         # X shape: (n_samples, n_features), y shape: (n_samples,)
         self.n_features = X.shape[1]
         self.n_samples = X.shape[0]
-        if self.max_features is None:
-            self.max_features = self.n_features
+        self.max_features_ = resolve_max_features(
+            self.max_features,
+            self.n_features
+        )
         self.tree = self._grow_tree(X, y)
         if self.ccp_alpha > 0:
             self.tree = self._prune_tree(self.tree, X, y)
@@ -99,7 +103,7 @@ class DecisionTreeRegressor:
             return self._make_leaf(y)
 
         # 随机选择特征子集 / Randomly select a subset of features
-        feature_idxs = np.random.choice(n_features, self.max_features, replace=False)
+        feature_idxs = np.random.choice(n_features, self.max_features_, replace=False)
 
         # 寻找最佳分裂 / Find the best split
         best_feature, best_threshold, impurity_decrease = self._best_split(X[:, feature_idxs], y)
@@ -153,7 +157,7 @@ class DecisionTreeRegressor:
         best_var = parent_var
         best_feature, best_threshold = None, None
 
-        for feature in range(self.max_features):
+        for feature in range(X.shape[1]):
             thresholds, targets = zip(*sorted(zip(X[:, feature], y)))
             left_sum = 0
             right_sum = sum(targets)

@@ -1,5 +1,6 @@
 import numpy as np
 from collections import Counter
+from .utils import resolve_max_features
 
 """
 算法思想:
@@ -34,6 +35,7 @@ class DecisionTreeClassifier:
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.max_features = max_features
+        self.max_features_ = None  # 当前训练数据解析后的特征子采样数量
         self.tree = None
         self.n_classes = None # 类别数
         self.n_features = None # 特征数 
@@ -45,8 +47,10 @@ class DecisionTreeClassifier:
         self.classes_, encoded_y = np.unique(y, return_inverse=True)
         self.n_classes = len(self.classes_)
         self.n_features = X.shape[1]
-        if self.max_features is None:
-            self.max_features = self.n_features
+        self.max_features_ = resolve_max_features(
+            self.max_features,
+            self.n_features
+        )
         self.tree = self._grow_tree(X, encoded_y)
         if self.ccp_alpha > 0:
             self.tree = self._prune_tree(self.tree, X, encoded_y)
@@ -172,7 +176,7 @@ class DecisionTreeClassifier:
             return self._make_leaf(y)
 
         # 随机选择特征子集
-        feature_idxs = np.random.choice(n_features, self.max_features, replace=False)
+        feature_idxs = np.random.choice(n_features, self.max_features_, replace=False)
 
         # 寻找最佳分裂
         best_feature, best_threshold = self._best_split(X[:, feature_idxs], y)
@@ -219,7 +223,7 @@ class DecisionTreeClassifier:
         best_gini = 1.0 - sum((n / m) ** 2 for n in num_parent)
         best_feature, best_threshold = None, None
 
-        for feature in range(self.max_features):
+        for feature in range(X.shape[1]):
             thresholds, classes = zip(*sorted(zip(X[:, feature], y)))
             num_left = [0] * self.n_classes
             num_right = num_parent.copy()

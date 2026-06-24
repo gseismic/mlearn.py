@@ -47,6 +47,22 @@ def test_random_forest_classifier_refit_replaces_trees():
     assert len(model.trees) == 3
 
 
+def test_random_forest_classifier_log2_single_feature_uses_one():
+    """验证单特征数据的 log2 配置不会解析为零。"""
+    X = np.arange(4, dtype=float).reshape(-1, 1)
+    y = np.array([0, 0, 1, 1])
+    model = ensemble.RandomForestClassifier(
+        n_estimators=3,
+        max_depth=2,
+        max_features="log2",
+        random_state=0
+    ).fit(X, y)
+
+    assert model.max_features == "log2"
+    assert model.max_features_ == 1
+    np.testing.assert_array_equal(model.predict(X), y)
+
+
 if __name__ == '__main__':
     if 1:
         test_randomtree_classifier_hello()
