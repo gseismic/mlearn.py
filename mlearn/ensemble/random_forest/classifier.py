@@ -2,7 +2,11 @@ import numpy as np
 from collections import Counter
 from ...tree.classifier import DecisionTreeClassifier
 from ...tree.utils import resolve_max_features
-from ...utils import validate_X, validate_X_y
+from ...utils import (
+    validate_X,
+    validate_X_y,
+    validate_positive_integer,
+)
 
 
 class RandomForestClassifier:
@@ -24,6 +28,17 @@ class RandomForestClassifier:
 
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
+        validate_positive_integer(self.n_estimators, "n_estimators")
+        validate_positive_integer(
+            self.max_depth,
+            "max_depth",
+            allow_none=True
+        )
+        validate_positive_integer(
+            self.min_samples_split,
+            "min_samples_split",
+            minimum=2
+        )
         X, y = validate_X_y(X, y)
         self.trees = []
         rng = np.random.default_rng(self.random_state)

@@ -1,7 +1,11 @@
 import numpy as np
 from ...tree.regressor import DecisionTreeRegressor
 from ...tree.utils import resolve_max_features
-from ...utils import validate_X, validate_X_y
+from ...utils import (
+    validate_X,
+    validate_X_y,
+    validate_positive_integer,
+)
 
 class RandomForestRegressor:
     """随机森林回归器 / Random Forest Regressor
@@ -21,6 +25,17 @@ class RandomForestRegressor:
 
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
+        validate_positive_integer(self.n_estimators, "n_estimators")
+        validate_positive_integer(
+            self.max_depth,
+            "max_depth",
+            allow_none=True
+        )
+        validate_positive_integer(
+            self.min_samples_split,
+            "min_samples_split",
+            minimum=2
+        )
         X, y = validate_X_y(X, y, numeric_y=True)
         self.trees = []
         rng = np.random.default_rng(self.random_state)

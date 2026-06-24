@@ -1,6 +1,11 @@
 import numpy as np
 from ...tree.regressor import DecisionTreeRegressor
-from ...utils import validate_X, validate_X_y
+from ...utils import (
+    validate_X,
+    validate_X_y,
+    validate_positive_integer,
+    validate_positive_real,
+)
 
 
 class GBDTRegressor:
@@ -13,6 +18,9 @@ class GBDTRegressor:
     
     def fit(self, X, y):
         # 训练GBDT模型
+        validate_positive_integer(self.n_estimators, "n_estimators")
+        validate_positive_real(self.learning_rate, "learning_rate")
+        validate_positive_integer(self.max_depth, "max_depth")
         X, y = validate_X_y(X, y, numeric_y=True)
         self.trees_ = []
         self.n_features_ = X.shape[1]

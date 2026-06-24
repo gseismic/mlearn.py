@@ -1,6 +1,11 @@
 import numpy as np
 from .utils import resolve_max_features
-from ..utils import validate_X, validate_X_y
+from ..utils import (
+    validate_X,
+    validate_X_y,
+    validate_nonnegative_real,
+    validate_positive_integer,
+)
 
 class DecisionTreeRegressor:
     """决策树回归器 / Decision Tree Regressor"""
@@ -35,6 +40,21 @@ class DecisionTreeRegressor:
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
         # X shape: (n_samples, n_features), y shape: (n_samples,)
+        validate_positive_integer(
+            self.max_depth,
+            "max_depth",
+            allow_none=True
+        )
+        validate_positive_integer(
+            self.min_samples_split,
+            "min_samples_split",
+            minimum=2
+        )
+        validate_nonnegative_real(
+            self.min_impurity_decrease,
+            "min_impurity_decrease"
+        )
+        validate_nonnegative_real(self.ccp_alpha, "ccp_alpha")
         X, y = validate_X_y(X, y, numeric_y=True)
         self._rng = np.random.default_rng(self.random_state)
         self.n_features = X.shape[1]

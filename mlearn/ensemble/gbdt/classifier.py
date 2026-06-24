@@ -1,6 +1,11 @@
 import numpy as np
 from mlearn.tree.regressor import DecisionTreeRegressor
-from mlearn.utils import validate_X, validate_X_y
+from mlearn.utils import (
+    validate_X,
+    validate_X_y,
+    validate_positive_integer,
+    validate_positive_real,
+)
 
 
 class GBDTClassifier:
@@ -14,6 +19,14 @@ class GBDTClassifier:
         self.classes_ = None
 
     def fit(self, X, y):
+        validate_positive_integer(self.n_estimators, "n_estimators")
+        validate_positive_real(self.learning_rate, "learning_rate")
+        validate_positive_integer(self.max_depth, "max_depth")
+        validate_positive_integer(
+            self.min_samples_split,
+            "min_samples_split",
+            minimum=2
+        )
         X, y = validate_X_y(X, y)
         self.classes_, encoded_y = np.unique(y, return_inverse=True)
         if len(self.classes_) != 2:

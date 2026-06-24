@@ -1,7 +1,12 @@
 import numpy as np
 from collections import Counter
 from .utils import resolve_max_features
-from ..utils import validate_X, validate_X_y
+from ..utils import (
+    validate_X,
+    validate_X_y,
+    validate_nonnegative_real,
+    validate_positive_integer,
+)
 
 """
 算法思想:
@@ -49,6 +54,17 @@ class DecisionTreeClassifier:
     
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
+        validate_positive_integer(
+            self.max_depth,
+            "max_depth",
+            allow_none=True
+        )
+        validate_positive_integer(
+            self.min_samples_split,
+            "min_samples_split",
+            minimum=2
+        )
+        validate_nonnegative_real(self.ccp_alpha, "ccp_alpha")
         X, y = validate_X_y(X, y)
         self._rng = np.random.default_rng(self.random_state)
         self.classes_, encoded_y = np.unique(y, return_inverse=True)

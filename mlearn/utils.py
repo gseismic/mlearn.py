@@ -1,3 +1,5 @@
+import numbers
+
 import numpy as np
 
 
@@ -60,3 +62,29 @@ def validate_X_y(X, y, numeric_y=False):
     if X.shape[0] != y.shape[0]:
         raise ValueError("X 和 y 的样本数量必须相同。")
     return X, y
+
+
+def validate_positive_integer(value, name, minimum=1, allow_none=False):
+    """校验正整数类超参数，并拒绝布尔值。"""
+    if allow_none and value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, numbers.Integral):
+        raise TypeError(f"{name} 必须是整数。")
+    if value < minimum:
+        raise ValueError(f"{name} 必须不小于 {minimum}。")
+
+
+def validate_positive_real(value, name):
+    """校验有限正实数超参数。"""
+    if isinstance(value, bool) or not isinstance(value, numbers.Real):
+        raise TypeError(f"{name} 必须是实数。")
+    if not np.isfinite(value) or value <= 0:
+        raise ValueError(f"{name} 必须是有限正数。")
+
+
+def validate_nonnegative_real(value, name):
+    """校验有限非负实数超参数。"""
+    if isinstance(value, bool) or not isinstance(value, numbers.Real):
+        raise TypeError(f"{name} 必须是实数。")
+    if not np.isfinite(value) or value < 0:
+        raise ValueError(f"{name} 必须是有限非负数。")
