@@ -51,6 +51,29 @@ def test_tree_classifier():
     print("Accuracy:", accuracy)
 
 
+def test_tree_classifier_supports_non_consecutive_integer_labels():
+    """验证分类树不会把非连续整数标签直接作为数组下标。"""
+    X = np.array([[0.0], [1.0], [2.0], [3.0]])
+    y = np.array([10, 10, 20, 20])
+
+    clf = tree.DecisionTreeClassifier(max_depth=2)
+    clf.fit(X, y)
+
+    np.testing.assert_array_equal(clf.predict(X), y)
+    np.testing.assert_array_equal(clf.classes_, np.array([10, 20]))
+
+
+def test_tree_classifier_supports_string_labels():
+    """验证公开预测会从内部类别编码恢复为字符串标签。"""
+    X = np.array([[0.0], [1.0], [2.0], [3.0]])
+    y = np.array(["down", "down", "up", "up"])
+
+    clf = tree.DecisionTreeClassifier(max_depth=2)
+    clf.fit(X, y)
+
+    np.testing.assert_array_equal(clf.predict(X), y)
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_classifier_hello()

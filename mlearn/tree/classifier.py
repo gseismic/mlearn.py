@@ -37,24 +37,30 @@ class DecisionTreeClassifier:
         self.tree = None
         self.n_classes = None # 类别数
         self.n_features = None # 特征数 
+        self.classes_ = None  # 原始类别标签，树内部使用连续整数编码
         self.ccp_alpha = ccp_alpha
     
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
-        self.n_classes = len(np.unique(y))
+        self.classes_, encoded_y = np.unique(y, return_inverse=True)
+        self.n_classes = len(self.classes_)
         self.n_features = X.shape[1]
         if self.max_features is None:
             self.max_features = self.n_features
-        self.tree = self._grow_tree(X, y)
+        self.tree = self._grow_tree(X, encoded_y)
         if self.ccp_alpha > 0:
-            self.tree = self._prune_tree(self.tree, X, y)
+            self.tree = self._prune_tree(self.tree, X, encoded_y)
         return self
 
     def predict(self, X):
         """使用训练好的模型进行预测 / Make predictions using the trained model"""
         if X.ndim == 1:
             X = X.reshape(1, -1)
-        return np.array([self._predict_tree(x, self.tree) for x in X])
+        encoded_predictions = np.array(
+            [self._predict_tree(x, self.tree) for x in X],
+            dtype=int
+        )
+        return self.classes_[encoded_predictions]
 
     def feature_importance(self):
         """计算特征重要性/ Calculate feature importance
