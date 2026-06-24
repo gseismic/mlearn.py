@@ -70,7 +70,10 @@ class DecisionTreeClassifier:
         """
         importance = np.zeros(self.n_features)
         self._feature_importance(self.tree, importance)
-        return importance / np.sum(importance)
+        total_importance = np.sum(importance)
+        if total_importance == 0:
+            return importance
+        return importance / total_importance
 
     def _feature_importance(self, node, importance):
         if 'value' in node:
@@ -166,18 +169,17 @@ class DecisionTreeClassifier:
         if (self.max_depth is not None and depth >= self.max_depth) or \
            n_samples < self.min_samples_split or \
            n_labels == 1:
-            leaf_value = Counter(y).most_common(1)[0][0]
-            return {
-                'value': leaf_value,
-                'n_samples': n_samples,
-                'class_counts': [np.sum(y == c) for c in range(self.n_classes)]
-            }
+            return self._make_leaf(y)
 
         # 随机选择特征子集
         feature_idxs = np.random.choice(n_features, self.max_features, replace=False)
 
         # 寻找最佳分裂
         best_feature, best_threshold = self._best_split(X[:, feature_idxs], y)
+
+        # 常量特征等场景不存在合法阈值，当前节点应直接成为叶节点
+        if best_feature is None or best_threshold is None:
+            return self._make_leaf(y)
 
         # 分裂数据
         left_idxs = X[:, feature_idxs[best_feature]] < best_threshold
@@ -196,6 +198,14 @@ class DecisionTreeClassifier:
             'n_samples': n_samples,
             'class_counts': [np.sum(y == c) for c in range(self.n_classes)],
             'impurity': self._calculate_gini([np.sum(y == c) for c in range(self.n_classes)])
+        }
+
+    def _make_leaf(self, y):
+        """构造多数类叶节点，并保留剪枝和特征重要性所需统计量。"""
+        return {
+            'value': Counter(y).most_common(1)[0][0],
+            'n_samples': len(y),
+            'class_counts': [np.sum(y == c) for c in range(self.n_classes)]
         }
         
     def _best_split(self, X, y):
@@ -227,7 +237,7 @@ class DecisionTreeClassifier:
                     continue
 
                 # 如果基尼不纯度小于最佳基尼不纯度，则更新最佳基尼不纯度和最佳特征、阈值 / If the Gini impurity is less than the best Gini impurity, update the best Gini impurity, best feature, and threshold 
-                if gini < best_gini:
+                if best_feature is None or gini < best_gini:
                     best_gini = gini
                     best_feature = feature
                     best_threshold = (thresholds[i] + thresholds[i - 1]) / 2

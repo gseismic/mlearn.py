@@ -74,6 +74,27 @@ def test_tree_classifier_supports_string_labels():
     np.testing.assert_array_equal(clf.predict(X), y)
 
 
+def test_tree_classifier_constant_features_create_leaf():
+    """验证没有合法阈值时生成叶节点，而不是使用空阈值继续分裂。"""
+    X = np.ones((4, 1))
+    y = np.array([0, 1, 0, 1])
+
+    clf = tree.DecisionTreeClassifier().fit(X, y)
+
+    np.testing.assert_array_equal(clf.predict(X), np.zeros(4, dtype=int))
+    np.testing.assert_array_equal(clf.feature_importance(), np.zeros(1))
+
+
+def test_tree_classifier_allows_zero_gain_split_for_xor():
+    """验证根节点零收益时仍可继续生长并在下一层分开 XOR 标签。"""
+    X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    y = np.array([0, 1, 1, 0])
+
+    clf = tree.DecisionTreeClassifier(max_depth=2).fit(X, y)
+
+    np.testing.assert_array_equal(clf.predict(X), y)
+
+
 if __name__ == '__main__':
     if 1:
         test_tree_classifier_hello()
