@@ -7,6 +7,7 @@ setup(
     packages=find_packages(),
     description='classic machine learning algorithm implementation with minimum lines of code',
     install_requires = ['numpy', 'loguru'],
+    extras_require={'torch': ['torch']},
     scripts=[],
     python_requires = '>=3',
     include_package_data=True,

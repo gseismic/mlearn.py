@@ -29,6 +29,7 @@ def test_linear_numpy_basic():
 
 
 def test_linear_torch_basic():
+    pytest.importorskip("torch")
     X, y = get_dataset()
 
     # 创建并训练模型
