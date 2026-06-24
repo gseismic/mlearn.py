@@ -25,24 +25,29 @@ class LinearRegression:
         返回:
         self: 训练后的模型实例
         """
-        # 确保y是二维数组
-        if y.ndim == 1:
-            y = y.reshape(-1, 1)  # shape: (n_samples, 1)
+        X = np.asarray(X)
+        y = np.asarray(y)
+        if X.ndim != 2:
+            raise ValueError("X 必须是二维特征矩阵。")
+        if y.ndim == 2 and y.shape[1] == 1:
+            y = y.reshape(-1)
+        elif y.ndim != 1:
+            raise ValueError("y 必须是一维数组或单列二维数组。")
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X 和 y 的样本数量必须相同。")
         
         if self.fit_intercept:
             # 添加一列1用于拟合截距
             X = np.column_stack((np.ones(X.shape[0]), X))  # shape: (n_samples, n_features + 1)
         
-        # 使用正规方程求解参数
-        # X.T.dot(X) shape: (n_features + 1, n_features + 1) 或 (n_features, n_features)
-        # X.T.dot(y) shape: (n_features + 1, 1) 或 (n_features, 1)
-        theta = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)  # shape: (n_features + 1, 1) 或 (n_features, 1)
+        # 使用 SVD 驱动的最小二乘求解，兼容秩亏和欠定设计矩阵
+        theta, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
         
         if self.fit_intercept:
-            self.intercept_ = theta[0, 0]  # 截距,shape: ()
-            self.coef_ = theta[1:, 0]  # 系数,shape: (n_features,)
+            self.intercept_ = theta[0]  # 截距,shape: ()
+            self.coef_ = theta[1:]  # 系数,shape: (n_features,)
         else:
-            self.coef_ = theta[:, 0]  # 系数,shape: (n_features,)
+            self.coef_ = theta  # 系数,shape: (n_features,)
 
         return self
 
