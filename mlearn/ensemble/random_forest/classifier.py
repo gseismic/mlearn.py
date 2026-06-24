@@ -2,6 +2,7 @@ import numpy as np
 from collections import Counter
 from ...tree.classifier import DecisionTreeClassifier
 from ...tree.utils import resolve_max_features
+from ...utils import validate_X, validate_X_y
 
 
 class RandomForestClassifier:
@@ -23,6 +24,7 @@ class RandomForestClassifier:
 
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
+        X, y = validate_X_y(X, y)
         self.trees = []
         rng = np.random.default_rng(self.random_state)
         self.n_classes = len(np.unique(y))
@@ -49,6 +51,9 @@ class RandomForestClassifier:
 
     def predict(self, X):
         """使用随机森林进行预测 / Make predictions using the random forest"""
+        if not self.trees:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(X, n_features=self.n_features, allow_1d=True)
         # 收集每棵树的预测结果 / Collect predictions from each tree
         tree_preds = np.array([tree.predict(X) for tree in self.trees])
         # 使用多数投票确定最终预测 / Use majority voting to determine the final prediction

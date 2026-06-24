@@ -1,5 +1,6 @@
 import numpy as np
 from ...tree.regressor import DecisionTreeRegressor
+from ...utils import validate_X, validate_X_y
 
 
 class GBDTRegressor:
@@ -12,9 +13,11 @@ class GBDTRegressor:
     
     def fit(self, X, y):
         # 训练GBDT模型
+        X, y = validate_X_y(X, y, numeric_y=True)
         self.trees_ = []
+        self.n_features_ = X.shape[1]
         self.initial_prediction_ = np.mean(y)  # 初始预测为目标均值 / Initial prediction is the mean of the target
-        self.y_pred_ = self.initial_prediction_ * np.ones_like(y)  # 初始预测值 / Initial prediction values
+        self.y_pred_ = np.full(len(y), self.initial_prediction_, dtype=float)
         self.residuals_ = y - self.y_pred_
         
         for _ in range(self.n_estimators):
@@ -37,7 +40,10 @@ class GBDTRegressor:
         返回:
         numpy.ndarray, shape (n_samples,) - 预测的目标值 / Predicted target values
         """
-        predictions = self.initial_prediction_ * np.ones(X.shape[0])  # 初始均值作为基线预测 / Initial mean as baseline prediction
+        if self.initial_prediction_ is None:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(X, n_features=self.n_features_, allow_1d=True)
+        predictions = np.full(X.shape[0], self.initial_prediction_, dtype=float)
         for tree in self.trees_:
             predictions += self.learning_rate * tree.predict(X)
         return predictions

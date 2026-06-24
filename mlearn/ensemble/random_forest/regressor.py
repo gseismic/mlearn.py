@@ -1,6 +1,7 @@
 import numpy as np
 from ...tree.regressor import DecisionTreeRegressor
 from ...tree.utils import resolve_max_features
+from ...utils import validate_X, validate_X_y
 
 class RandomForestRegressor:
     """随机森林回归器 / Random Forest Regressor
@@ -20,6 +21,7 @@ class RandomForestRegressor:
 
     def fit(self, X, y):
         """训练随机森林模型 / Train the random forest model"""
+        X, y = validate_X_y(X, y, numeric_y=True)
         self.trees = []
         rng = np.random.default_rng(self.random_state)
         # X shape: (n_samples, n_features), y shape: (n_samples,)
@@ -47,6 +49,9 @@ class RandomForestRegressor:
     def predict(self, X):
         """使用随机森林进行预测 / Make predictions using the random forest"""
         # X shape: (n_samples, n_features), return shape: (n_samples,)
+        if not self.trees:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(X, n_features=self.n_features, allow_1d=True)
         # 收集每棵树的预测结果 / Collect predictions from each tree
         tree_preds = np.array([tree.predict(X) for tree in self.trees])
         # 计算平均值作为最终预测 / Calculate the mean as the final prediction

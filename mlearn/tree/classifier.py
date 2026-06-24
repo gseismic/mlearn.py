@@ -1,6 +1,7 @@
 import numpy as np
 from collections import Counter
 from .utils import resolve_max_features
+from ..utils import validate_X, validate_X_y
 
 """
 算法思想:
@@ -48,6 +49,7 @@ class DecisionTreeClassifier:
     
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
+        X, y = validate_X_y(X, y)
         self._rng = np.random.default_rng(self.random_state)
         self.classes_, encoded_y = np.unique(y, return_inverse=True)
         self.n_classes = len(self.classes_)
@@ -64,8 +66,9 @@ class DecisionTreeClassifier:
 
     def predict(self, X):
         """使用训练好的模型进行预测 / Make predictions using the trained model"""
-        if X.ndim == 1:
-            X = X.reshape(1, -1)
+        if self.tree is None:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(X, n_features=self.n_features, allow_1d=True)
         encoded_predictions = np.array(
             [self._predict_tree(x, self.tree) for x in X],
             dtype=int

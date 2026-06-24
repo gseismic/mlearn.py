@@ -1,5 +1,6 @@
 import numpy as np
 from mlearn.tree.regressor import DecisionTreeRegressor
+from mlearn.utils import validate_X, validate_X_y
 
 
 class GBDTClassifier:
@@ -13,16 +14,13 @@ class GBDTClassifier:
         self.classes_ = None
 
     def fit(self, X, y):
-        X = np.asarray(X)
-        y = np.asarray(y)
-        if y.ndim != 1:
-            raise ValueError("y 必须是一维类别数组。")
-
+        X, y = validate_X_y(X, y)
         self.classes_, encoded_y = np.unique(y, return_inverse=True)
         if len(self.classes_) != 2:
             raise ValueError("GBDTClassifier 仅支持恰好两个类别。")
 
         self.trees = []
+        self.n_features_ = X.shape[1]
         positive_rate = np.mean(encoded_y)
         self.F0 = np.log(positive_rate / (1 - positive_rate))
         F = np.full(len(encoded_y), self.F0, dtype=float)
@@ -47,7 +45,9 @@ class GBDTClassifier:
         return self
 
     def predict_proba(self, X):
-        X = np.asarray(X)
+        if self.F0 is None:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(X, n_features=self.n_features_, allow_1d=True)
         F = np.full(len(X), self.F0, dtype=float)
         for tree in self.trees:
             F += self.learning_rate * tree.predict(X)

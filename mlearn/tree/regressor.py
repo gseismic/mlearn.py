@@ -1,5 +1,6 @@
 import numpy as np
 from .utils import resolve_max_features
+from ..utils import validate_X, validate_X_y
 
 class DecisionTreeRegressor:
     """决策树回归器 / Decision Tree Regressor"""
@@ -34,6 +35,7 @@ class DecisionTreeRegressor:
     def fit(self, X, y):
         """训练决策树模型 / Train the decision tree model"""
         # X shape: (n_samples, n_features), y shape: (n_samples,)
+        X, y = validate_X_y(X, y, numeric_y=True)
         self._rng = np.random.default_rng(self.random_state)
         self.n_features = X.shape[1]
         self.n_samples = X.shape[0]
@@ -94,6 +96,9 @@ class DecisionTreeRegressor:
     def predict(self, X):
         """使用训练好的模型进行预测 / Make predictions using the trained model"""
         # X shape: (n_samples, n_features), return shape: (n_samples,)
+        if self.tree is None:
+            raise ValueError("模型尚未训练，请先调用 fit。")
+        X = validate_X(X, n_features=self.n_features, allow_1d=True)
         return np.array([self._predict_tree(x, self.tree) for x in X])
 
     def _grow_tree(self, X, y, depth=0):

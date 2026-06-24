@@ -12,16 +12,20 @@ def get_dataset():
 
 def test_randomtree_classifier_hello():
     # 创建一些示例数据 / Create some sample data
-    # np.random.seed(0)
-    X = np.random.rand(100, 5)  # shape: (100, 5)
-    y = 3*X[:, 0] + 2*X[:, 1] + np.random.randn(100) * 0.0001  # shape: (100,)
+    rng = np.random.default_rng(0)
+    X = rng.random((100, 5))  # shape: (100, 5)
+    y = 3*X[:, 0] + 2*X[:, 1] + rng.normal(size=100) * 0.0001  # shape: (100,)
 
     # 创建并训练模型 / Create and train the model
-    rf = ensemble.RandomForestRegressor(n_estimators=20, max_depth=3)
+    rf = ensemble.RandomForestRegressor(
+        n_estimators=20,
+        max_depth=4,
+        random_state=0
+    )
     rf.fit(X, y)  # X shape: (100, 5), y shape: (100,)
 
     # 进行预测 / Make predictions
-    X_test = np.random.rand(10, 5)  # shape: (10, 5)
+    X_test = rng.random((10, 5))  # shape: (10, 5)
     predictions = rf.predict(X_test)  # shape: (10,)
     assert predictions.shape == (10,)
 
