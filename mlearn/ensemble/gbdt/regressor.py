@@ -26,6 +26,8 @@ class GBDTRegressor:
             # XXX learning_rate是不是应该和n_estimators相关
             self.y_pred_ += self.learning_rate * tree.predict(X)
             self.residuals_ = y - self.y_pred_
+
+        return self
     
     def predict(self, X):
         """

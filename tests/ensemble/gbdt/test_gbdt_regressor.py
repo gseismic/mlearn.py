@@ -31,6 +31,22 @@ def test_gbdt_regressor_refit_replaces_trees():
     assert len(model.trees_) == 3
 
 
+def test_gbdt_regressor_fit_returns_self_for_chaining():
+    """验证回归 GBDT 遵守估计器 fit 返回 self 的约定。"""
+    X = np.array([[0.0], [1.0], [2.0], [3.0]])
+    y = np.array([0.0, 1.0, 2.0, 3.0])
+    model = ensemble.GBDTRegressor(n_estimators=3, max_depth=1)
+
+    fitted = model.fit(X, y)
+    predictions = ensemble.GBDTRegressor(
+        n_estimators=3,
+        max_depth=1
+    ).fit(X, y).predict(X)
+
+    assert fitted is model
+    assert predictions.shape == (4,)
+
+
 if __name__ == '__main__':
     if 1:
         test_gbdt_regressor_basic()
